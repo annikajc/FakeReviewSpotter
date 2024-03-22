@@ -1,0 +1,9 @@
+{
+    "manifest_version": 3,
+    "name": "Fake Review Spotter",
+    "version": "1.0.0",
+    "description": "An AI powered extension to detect fake reviews.",
+    "action": {
+        "default_popup": "/frontend/index.html"
+    }
+  }

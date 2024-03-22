@@ -1,0 +1,7 @@
+.main-container {
+    width: 300px;
+    height: auto;
+    background: #ffffff;
+    margin: auto;
+    box-sizing: content-box;
+}
