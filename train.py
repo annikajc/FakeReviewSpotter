@@ -29,7 +29,7 @@ def main():
     model = FakeReviewsLightning(clearml_logger=task.get_logger()).to(device)
 
     # initialize checkpoint callback depending on parse arguments
-    checkpoint_callback = ModelCheckpoint(dirpath="checkpoints/", monitor="loss", mode="min")
+    checkpoint_callback = ModelCheckpoint(dirpath="checkpoints/", monitor="val_loss", mode="min")
 
     trainer = Trainer(accelerator="gpu", max_epochs=300, profiler="simple",
                           callbacks=[checkpoint_callback, ModelSummary(4),
