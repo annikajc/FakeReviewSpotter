@@ -4,7 +4,8 @@ import sys
 import torchmetrics
 sys.path.append("./fairseq")
 from fairseq.data.data_utils import collate_tokens
-
+from torchmetrics import MetricCollection
+from torchmetrics.classification import BinaryAccuracy, BinaryPrecision, BinaryRecall, BinaryF1Score
 
 class FakeReviewsRoberta(torch.nn.Module):
     def __init__(self, num_classes=1, device="cuda"):
@@ -43,21 +44,21 @@ class FakeReviewsLightning(pl.LightningModule):
         # initialize loss function
         self.loss_fn = torch.nn.BCELoss()
 
-        # initialize model metrics
-        # accuracy
-        self.accuracy = torchmetrics.Accuracy(task="binary")
+        # initialize model metrics for training and validation
+        self.train_metrics = MetricCollection({
+            'train_accuracy': BinaryAccuracy()
+        })
+#, BinaryPrecision(),
+#            BinaryRecall(), BinaryF1Score()
+      #  ])
+        self.val_metrics = MetricCollection({
+            'val_accuracy': BinaryAccuracy()
+        })
+#, BinaryPrecision(),
+#            BinaryRecall(), BinaryF1Score()
+#        ])
 
-        # precision
-        self.precision = torchmetrics.Precision(task="binary")
-
-        # recall
-        self.recall = torchmetrics.Recall(task="binary")
-
-        # F1-score
-        self.f1 = torchmetrics.F1Score(task="binary")
-
-        # Confusion Matrix
-        self.cm = torchmetrics.ConfusionMatrix(task="binary")
+        self.validation_epoch_loss = []
 
     def forward(self, x):
         return self.model(x)
@@ -65,14 +66,14 @@ class FakeReviewsLightning(pl.LightningModule):
     def configure_optimizers(self):
         # initialize Adam optimizer
         optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
-        lr_scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer, max_lr=1e-02, total_steps=int((40000*0.9*0.8/8)+1)*300)
+        lr_scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer, max_lr=1e-02, total_steps=int((40000*0.9*0.8)+1)*300)
         
         return [optimizer], [lr_scheduler]
 
     def on_train_start(self):
         # self.model.roberta.train()
         self.model.roberta.eval()
-
+ 
     def on_validation_start(self):
         self.model.roberta.eval()
 
@@ -92,19 +93,17 @@ class FakeReviewsLightning(pl.LightningModule):
         loss = self.loss_fn(outputs, labels.to(torch.float))
 
         # metrics
-       	self.accuracy(outputs, labels)
-        self.precision(outputs, labels)
-        self.recall(outputs, labels)
-        self.f1(outputs, labels)
+       	self.train_metrics.update(outputs, labels)
 
-        self.log('train_loss', loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
-        self.log_dict(
-            {'train_accuracy': self.accuracy, 'train_precision': self.precision, 'train_recall': self.recall, 'train_f1': self.f1},
-            on_step=False, on_epoch=True, prog_bar=False, logger=True
-        )
+        self.log('train_loss', loss, on_step=False, on_epoch=True, prog_bar=True, logger=True)
 
         return {'loss': loss}
-    
+
+    def on_training_epoch_end(self):
+        metrics = self.train_metrics.compute()
+        self.log_dict(metrics)
+        self.train_metrics.reset()
+
     def validation_step(self, batch, batch_idx):
         # get reviews and labels from batch
         reviews, labels = batch
@@ -115,17 +114,22 @@ class FakeReviewsLightning(pl.LightningModule):
         loss = self.loss_fn(outputs, labels.to(torch.float))
 
         # metrics
-        self.accuracy(outputs, labels)
-        self.precision(outputs, labels)
-        self.recall(outputs, labels)
-        self.f1(outputs, labels)
-
+        self.val_metrics.update(outputs, labels)
         self.log('val_loss', loss, on_step=False, on_epoch=True, prog_bar=True, logger=True)
-        self.log_dict(
-            {'val_accuracy': self.accuracy, 'val_precision': self.precision, 'val_recall': self.recall, 'val_f1': self.f1},
-            on_step=False, on_epoch=True, prog_bar=False, logger=True
-        )
+        
+        self.validation_epoch_loss.append(loss)
         return {'loss': loss}
+    
+    def on_validation_epoch_end(self):
+        metrics = self.val_metrics.compute()
+        self.log_dict(metrics)
+        self.val_metrics.reset()
+
+        avg_loss = sum(self.validation_epoch_loss) / len(self.validation_epoch_loss)
+        self.clearml_logger.report_scalar(
+                title='val_loss', series='val_loss', value=avg_loss, iteration=self.global_step
+        )
+        self.validation_epoch_loss = []
     
     def test_step(self, batch, batch_idx):
         # get reviews and labels from batch
