@@ -15,7 +15,7 @@ class FakeReviewsRoberta(torch.nn.Module):
         self.roberta = torch.hub.load('facebookresearch/fairseq', 'roberta.base')
 
         # set to training mode
-        self.roberta.eval()
+        self.roberta.train()
         self.roberta.cuda()
         self.roberta.register_classification_head('fake_reviews', pooler_activation_fn=torch.nn.ReLU(), pooler_dropout=torch.nn.Dropout(p=0.5), num_classes=num_classes)
 
@@ -72,7 +72,7 @@ class FakeReviewsLightning(pl.LightningModule):
 
     def on_train_start(self):
         # self.model.roberta.train()
-        self.model.roberta.eval()
+        self.model.roberta.train()
  
     def on_validation_start(self):
         self.model.roberta.eval()
