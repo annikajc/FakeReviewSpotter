@@ -26,6 +26,8 @@ def main():
     torch.set_float32_matmul_precision('high')
 
     datamodule = DataModuleFakeReviews(batch_size=1, num_workers=8)
+
+    #model = FakeReviewsLightning.load_from_checkpoint("checkpoints/epoch=0-step=29108.ckpt", clearml_logger=task.get_logger()).to(device)
     model = FakeReviewsLightning(clearml_logger=task.get_logger()).to(device)
 
     # initialize checkpoint callback depending on parse arguments

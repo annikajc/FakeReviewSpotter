@@ -7,20 +7,26 @@ from fairseq.data.data_utils import collate_tokens
 
 
 class FakeReviewsRoberta(torch.nn.Module):
-    def __init__(self, num_classes=1):
+    def __init__(self, num_classes=1, device="cuda"):
         super().__init__()
         
         # load pre-trained Roberta model and set to train mode
         self.roberta = torch.hub.load('facebookresearch/fairseq', 'roberta.base')
 
         # set to training mode
-        self.roberta.train()
+        self.roberta.eval()
         self.roberta.cuda()
         self.roberta.register_classification_head('fake_reviews', pooler_activation_fn=torch.nn.ReLU(), pooler_dropout=torch.nn.Dropout(p=0.5), num_classes=num_classes)
-    
+
+        # decoder layers
+        # self.dropout = torch.nn.Dropout(p=0.5).to(device)
+        # self.dense = torch.nn.Linear(self.roberta.model.args.encoder_embed_dim, self.roberta.model.args.encoder_embed_dim).to(device)
+        # self.activation_fn = torch.nn.ReLU().to(device)
+        # self.out = torch.nn.Linear(self.roberta.model.args.encoder_embed_dim, num_classes).to(device)
+
     def forward(self, batch):
-        tokens = collate_tokens([self.roberta.encode(review) for review in batch], pad_idx=1)
-        x = self.roberta.predict('fake_reviews', tokens)
+        x = collate_tokens([self.roberta.encode(review) for review in batch], pad_idx=1)
+        x = self.roberta.predict('fake_reviews', x)
         return x
     
 
@@ -80,18 +86,20 @@ class FakeReviewsLightning(pl.LightningModule):
 
         # pass reviews through model
         outputs = self.forward(reviews)
+        if batch_idx < 10:
+            print(outputs, labels)
         labels.resize_(outputs.size(dim=0), 1)
-        loss = self.loss_fn(outputs, labels.to(torch.float32))
+        loss = self.loss_fn(outputs, labels.to(torch.float))
 
         # metrics
-        accuracy = self.accuracy(outputs, labels)
-        precision = self.precision(outputs, labels)
-        recall = self.recall(outputs, labels)
-        f1 = self.f1(outputs, labels)
+       	self.accuracy(outputs, labels)
+        self.precision(outputs, labels)
+        self.recall(outputs, labels)
+        self.f1(outputs, labels)
 
-        self.log('train_loss', loss, on_step=False, on_epoch=True, prog_bar=True, logger=True)
+        self.log('train_loss', loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
         self.log_dict(
-            {'train_accuracy': accuracy, 'train_precision': precision, 'train_recall': recall, 'train_f1': f1},
+            {'train_accuracy': self.accuracy, 'train_precision': self.precision, 'train_recall': self.recall, 'train_f1': self.f1},
             on_step=False, on_epoch=True, prog_bar=False, logger=True
         )
 
@@ -104,17 +112,17 @@ class FakeReviewsLightning(pl.LightningModule):
         # pass reviews through model
         outputs = self.forward(reviews)
         labels.resize_(outputs.size(dim=0), 1)
-        loss = self.loss_fn(outputs, labels.to(torch.float32))
+        loss = self.loss_fn(outputs, labels.to(torch.float))
 
         # metrics
-        accuracy = self.accuracy(outputs, labels)
-        precision = self.precision(outputs, labels)
-        recall = self.recall(outputs, labels)
-        f1 = self.f1(outputs, labels)
+        self.accuracy(outputs, labels)
+        self.precision(outputs, labels)
+        self.recall(outputs, labels)
+        self.f1(outputs, labels)
 
         self.log('val_loss', loss, on_step=False, on_epoch=True, prog_bar=True, logger=True)
         self.log_dict(
-            {'val_accuracy': accuracy, 'val_precision': precision, 'val_recall': recall, 'val_f1': f1},
+            {'val_accuracy': self.accuracy, 'val_precision': self.precision, 'val_recall': self.recall, 'val_f1': self.f1},
             on_step=False, on_epoch=True, prog_bar=False, logger=True
         )
         return {'loss': loss}
@@ -127,17 +135,17 @@ class FakeReviewsLightning(pl.LightningModule):
         # pass reviews through model
         outputs = self.forward(reviews)
         labels.resize_(outputs.size(dim=0), 1)
-        loss = self.loss_fn(outputs, labels.to(torch.float32))
+        loss = self.loss_fn(outputs, labels.to(torch.float))
 
         # metrics
-        accuracy = self.accuracy(outputs, labels)
-        precision = self.precision(outputs, labels)
-        recall = self.recall(outputs, labels)
-        f1 = self.f1(outputs, labels)
+        self.accuracy(outputs, labels)
+        self.precision(outputs, labels)
+        self.recall(outputs, labels)
+        self.f1(outputs, labels)
 
         self.log('test_loss', loss, on_step=False, on_epoch=True, prog_bar=True, logger=True)
         self.log_dict(
-            {'test_accuracy': accuracy, 'test_precision': precision, 'test_recall': recall, 'test_f1': f1},
+            {'test_accuracy': self.accuracy, 'test_precision': self.precision, 'test_recall': self.recall, 'test_f1': self.f1},
             on_step=False, on_epoch=True, prog_bar=False, logger=True
         )
         return {'loss': loss}
