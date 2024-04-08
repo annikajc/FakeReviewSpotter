@@ -9,21 +9,38 @@ import numpy as np
 
 
 class DatasetFakeReviews(torch.utils.data.Dataset):
-    def __init__(self, data):
-        self.data = data
-
+    def __init__(self, data, tokenizer, max_length):
         super().__init__()
+        self.data = data
+        self.tokenizer = tokenizer
+        self.max_length = max_length
 
     def __getitem__(self, idx):
-        text, label = self.data.iloc[idx]['text_'], self.data.iloc[idx]['label']
-        return text, label
+        title = str(self.data.text_[idx])
+        title = " ".join(title.split())
+        inputs = self.tokenizer.encode_plus(
+            title,
+            None,
+            add_special_tokens=True,
+            padding='max_length',
+            max_length=self.max_length,
+            return_token_type_ids=True,
+            truncation=True,
+            return_tensors='pt'
+        )
+        ids = inputs['input_ids'].to(dtype=torch.long).flatten()
+        mask = inputs['attention_mask'].to(dtype=torch.long).flatten()
+        targets = torch.tensor(self.data.iloc[idx]['label'], dtype=torch.long).flatten()
+
+        return {'ids': ids, 'mask': mask, 'targets': targets}
 
     def __len__(self):
         return len(self.data)
     
 
 class DataModuleFakeReviews(pl.LightningDataModule):
-    def __init__(self, data="./data", batch_size=1, num_workers=0):
+
+    def __init__(self, data="./data", batch_size=1, tokenizer = None, max_length = None, num_workers=0):
         super().__init__()
         # later step: NLP Augmentation
         
@@ -36,6 +53,9 @@ class DataModuleFakeReviews(pl.LightningDataModule):
         self.train = None
         self.val = None
         self.test = None
+
+        self.tokenizer = tokenizer
+        self.max_length = max_length
     
     def prepare_data_per_node(self):
         pass
@@ -64,21 +84,21 @@ class DataModuleFakeReviews(pl.LightningDataModule):
         comb_test = shuffle(comb_test, random_state=420)
 
         # initialize datasets
-        self.train = DatasetFakeReviews(data=comb_train.reset_index())
-        self.val = DatasetFakeReviews(data=comb_val.reset_index())
-        self.test = DatasetFakeReviews(data=comb_test.reset_index())
+        self.train = DatasetFakeReviews(data=comb_train.reset_index(), tokenizer=self.tokenizer, max_length=self.max_length)
+        self.val = DatasetFakeReviews(data=comb_val.reset_index(), tokenizer=self.tokenizer, max_length=self.max_length)
+        self.test = DatasetFakeReviews(data=comb_test.reset_index(), tokenizer=self.tokenizer, max_length=self.max_length)
 
     def train_dataloader(self):
         return torch.utils.data.DataLoader(self.train, batch_size=self.batch_size, num_workers=self.num_workers, shuffle=True,
-                                           pin_memory=True, persistent_workers=True)
+                                           pin_memory=True, persistent_workers=False)
     
     def val_dataloader(self):
         return torch.utils.data.DataLoader(self.val, batch_size=self.batch_size, num_workers=self.num_workers, shuffle=False,
-                                           pin_memory=True, persistent_workers=True)
+                                           pin_memory=True, persistent_workers=False)
     
     def test_dataloader(self):
         return torch.utils.data.DataLoader(self.test, batch_size=self.batch_size, num_workers=self.num_workers, shuffle=False,
-                                           pin_memory=True, persistent_workers=True)
+                                           pin_memory=True, persistent_workers=False)
 
 
 

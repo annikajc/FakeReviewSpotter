@@ -9,24 +9,19 @@ class FakeReviewsRoberta(torch.nn.Module):
         super().__init__()
         
         # load pre-trained Roberta model and set to train mode
-        self.tokenizer = AutoTokenizer.from_pretrained("cardiffnlp/twitter-roberta-base-emotion")
-        self.roberta = RobertaForSequenceClassification.from_pretrained("cardiffnlp/twitter-roberta-base-emotion",
+        self.roberta = RobertaForSequenceClassification.from_pretrained("roberta-base",
                                                                         num_labels=num_classes,
-                                                                        max_position_embeddings=2048,
-                                                                        num_hidden_layers=4,
-                                                                        num_attention_heads=4,
                                                                         ignore_mismatched_sizes=True).to(device)
         self.stage = stage
         self.device = device
 
-    def forward(self, batch):
-        inputs = self.tokenizer(batch, add_special_tokens=False, return_tensors="pt", padding='max_length', max_length=2048).to(self.device)
+    def forward(self, ids, attention_mask, targets):
         if self.stage == "train":
-            logits = self.roberta(**inputs).logits
+            outputs = self.roberta(ids, attention_mask=attention_mask, labels=targets)
         else:
             with torch.no_grad():
-                logits = self.roberta(**inputs).logits
-        return logits
+                outputs = self.roberta(ids, attention_mask=attention_mask, labels=targets)
+        return outputs.logits
     
 
 class FakeReviewsLightning(pl.LightningModule):
@@ -47,12 +42,12 @@ class FakeReviewsLightning(pl.LightningModule):
         self.val_cm = BinaryConfusionMatrix()
         self.test_cm = BinaryConfusionMatrix()
 
-    def forward(self, x):
-        return self.model(x)
+    def forward(self, ids, mask, targets):
+        return self.model(ids, attention_mask=mask, targets=targets)
     
     def configure_optimizers(self):
         # initialize Adam optimizer
-        optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
+        optimizer = torch.optim.Adam(self.parameters(), lr=1e-5)
         lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode="min")
         
         return {"optimizer": optimizer, "lr_scheduler": {"scheduler": lr_scheduler, "monitor": "val_loss"}}
@@ -72,15 +67,17 @@ class FakeReviewsLightning(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
         # get reviews and labels from batch
-        reviews, labels = batch
+        ids = batch['ids']
+        mask = batch['mask']
+        targets = batch['targets']
 
         # pass reviews through model
-        outputs = self.forward(reviews)
-        labels.resize_(outputs.size(dim=0), 1)
-        loss = self.loss_fn(outputs, labels.to(torch.float))
+        outputs = self.forward(ids, mask, targets)
+        targets.resize_(outputs.size(dim=0), 1)
+        loss = self.loss_fn(outputs, targets.to(torch.float))
 
         # metrics
-        self.train_cm.update(outputs, labels)
+        self.train_cm.update(outputs, targets)
 
         self.log('train_loss', loss.detach(), on_step=False, on_epoch=True, prog_bar=True, logger=True)
 
@@ -105,16 +102,18 @@ class FakeReviewsLightning(pl.LightningModule):
 
     def validation_step(self, batch, batch_idx):
         # get reviews and labels from batch
-        reviews, labels = batch
+        ids = batch['ids']
+        mask = batch['mask']
+        targets = batch['targets']
         
         # pass reviews through model
         with torch.no_grad():
-            outputs = self.forward(reviews)
-        labels.resize_(outputs.size(dim=0), 1)
-        loss = self.loss_fn(outputs, labels.to(torch.float))
+            outputs = self.forward(ids, mask, targets)
+        targets.resize_(outputs.size(dim=0), 1)
+        loss = self.loss_fn(outputs, targets.to(torch.float))
 
         # metrics
-        self.val_cm.update(outputs, labels)
+        self.val_cm.update(outputs, targets)
 
         self.log('val_loss', loss.detach(), on_step=False, on_epoch=True, prog_bar=True, logger=True)
 
@@ -140,16 +139,18 @@ class FakeReviewsLightning(pl.LightningModule):
     
     def test_step(self, batch, batch_idx):
         # get reviews and labels from batch
-        reviews, labels = batch
+        ids = batch['ids']
+        mask = batch['mask']
+        targets = batch['targets']
 
         # pass reviews through model
         with torch.no_grad():
-            outputs = self.forward(reviews)
-        labels.resize_(outputs.size(dim=0), 1)
-        loss = self.loss_fn(outputs, labels.to(torch.float))
+            outputs = self.forward(ids, mask, targets)
+        targets.resize_(outputs.size(dim=0), 1)
+        loss = self.loss_fn(outputs, targets.to(torch.float))
 
         # metrics
-        self.test_cm.update(outputs, labels)
+        self.test_cm.update(outputs, targets)
 
         self.log('test_loss', loss.detach(), on_step=False, on_epoch=True, prog_bar=True, logger=True)
 

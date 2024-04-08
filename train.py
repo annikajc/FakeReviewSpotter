@@ -5,6 +5,7 @@ from pytorch_lightning.callbacks import ModelCheckpoint, ModelSummary, EarlyStop
 from pytorch_lightning import Trainer
 from lightning.pytorch.tuner import Tuner
 from clearml import Task
+from transformers import AutoTokenizer
 
 def main():
     # create ClearML task
@@ -26,19 +27,22 @@ def main():
 
     torch.set_float32_matmul_precision('high')
 
-    datamodule = DataModuleFakeReviews(batch_size=4, num_workers=8)
+    # initialize tokenizer
+    tokenizer = AutoTokenizer.from_pretrained("roberta-base")
+
+    datamodule = DataModuleFakeReviews(batch_size=2, tokenizer=tokenizer, max_length=256, num_workers=0)
 
     model = FakeReviewsLightning(clearml_logger=task.get_logger(), device=device).to(device)
 
     # initialize checkpoint callback depending on parse arguments
     checkpoint_callback = ModelCheckpoint(dirpath="checkpoints/", monitor="val_loss", mode="min")
 
-    trainer = Trainer(accelerator="gpu", max_epochs=1, profiler="simple",
+    trainer = Trainer(accelerator="gpu", max_epochs=300, profiler="simple",
                           callbacks=[checkpoint_callback, ModelSummary(4),
                                      EarlyStopping(monitor="val_loss",
                                                    mode="min",
                                                    patience=10)],
-                          strategy="auto", enable_checkpointing=True, limit_train_batches=10, limit_val_batches=10)
+                          strategy="auto", enable_checkpointing=True)
     # tuner = Tuner(trainer)
     # tuner.scale_batch_size(model, datamodule=datamodule, mode="power")
     
