@@ -3,10 +3,12 @@ from src.model import FakeReviewsLightning
 import torch
 from pytorch_lightning.callbacks import ModelCheckpoint, ModelSummary, EarlyStopping
 from pytorch_lightning import Trainer
+from lightning.pytorch.tuner import Tuner
 from clearml import Task
+
 def main():
     # create ClearML task
-    task = Task.init(project_name="fake_review_detection",
+    task = Task.init(project_name="Fake Review Detection",
                      task_name="finetune RoBERTa - v1.0")
 
     # initialize data module and model
@@ -21,24 +23,24 @@ def main():
 
     # enable cudnn benchmarking if available
     torch.backends.cudnn.benchmark = True if torch.backends.cudnn.is_available() and cuda_available else False
-    #precision = '16-mixed'
 
     torch.set_float32_matmul_precision('high')
 
     datamodule = DataModuleFakeReviews(batch_size=1, num_workers=8)
 
-    #model = FakeReviewsLightning.load_from_checkpoint("checkpoints/epoch=0-step=29108.ckpt", clearml_logger=task.get_logger()).to(device)
-    model = FakeReviewsLightning(clearml_logger=task.get_logger()).to(device)
+    model = FakeReviewsLightning(clearml_logger=task.get_logger(), device=device).to(device)
 
     # initialize checkpoint callback depending on parse arguments
     checkpoint_callback = ModelCheckpoint(dirpath="checkpoints/", monitor="val_loss", mode="min")
 
-    trainer = Trainer(accelerator="gpu", max_epochs=300, profiler="simple",
+    trainer = Trainer(accelerator="gpu", max_epochs=1, profiler="simple",
                           callbacks=[checkpoint_callback, ModelSummary(4),
                                      EarlyStopping(monitor="val_loss",
                                                    mode="min",
                                                    patience=10)],
-                          strategy="auto", enable_checkpointing=True)
+                          strategy="auto", enable_checkpointing=True, limit_train_batches=50, limit_val_batches=50)
+    tuner = Tuner(trainer)
+    tuner.scale_batch_size(model, datamodule=datamodule, mode="power")
     
     # else:
     #     print("No GPU")

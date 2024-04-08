@@ -16,7 +16,7 @@ class DatasetFakeReviews(torch.utils.data.Dataset):
 
     def __getitem__(self, idx):
         text, label = self.data.iloc[idx]['text_'], self.data.iloc[idx]['label']
-        text = text[0:min(len(text), 512)]
+        text += (" " * (2000 - len(text)))
         return text, label
 
     def __len__(self):
@@ -71,15 +71,15 @@ class DataModuleFakeReviews(pl.LightningDataModule):
 
     def train_dataloader(self):
         return torch.utils.data.DataLoader(self.train, batch_size=self.batch_size, num_workers=self.num_workers, shuffle=True,
-                                           pin_memory=True)
+                                           pin_memory=True, persistent_workers=True)
     
     def val_dataloader(self):
         return torch.utils.data.DataLoader(self.val, batch_size=self.batch_size, num_workers=self.num_workers, shuffle=False,
-                                           pin_memory=True)
+                                           pin_memory=True, persistent_workers=True)
     
     def test_dataloader(self):
         return torch.utils.data.DataLoader(self.test, batch_size=self.batch_size, num_workers=self.num_workers, shuffle=False,
-                                           pin_memory=True)
+                                           pin_memory=True, persistent_workers=True)
 
 
 
