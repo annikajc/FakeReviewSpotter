@@ -13,14 +13,14 @@ class FakeReviewsRoberta(torch.nn.Module):
         self.roberta = RobertaForSequenceClassification.from_pretrained("cardiffnlp/twitter-roberta-base-emotion",
                                                                         num_labels=num_classes,
                                                                         max_position_embeddings=2048,
-                                                                        num_hidden_layers=6,
-                                                                        num_attention_heads=6,
+                                                                        num_hidden_layers=4,
+                                                                        num_attention_heads=4,
                                                                         ignore_mismatched_sizes=True).to(device)
         self.stage = stage
         self.device = device
 
     def forward(self, batch):
-        inputs = self.tokenizer(batch, add_special_tokens=False, return_tensors="pt").to(self.device)
+        inputs = self.tokenizer(batch, add_special_tokens=False, return_tensors="pt", padding='max_length', max_length=2048).to(self.device)
         if self.stage == "train":
             logits = self.roberta(**inputs).logits
         else:

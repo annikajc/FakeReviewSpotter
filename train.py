@@ -26,19 +26,19 @@ def main():
 
     torch.set_float32_matmul_precision('high')
 
-    datamodule = DataModuleFakeReviews(batch_size=1, num_workers=4)
+    datamodule = DataModuleFakeReviews(batch_size=4, num_workers=8)
 
     model = FakeReviewsLightning(clearml_logger=task.get_logger(), device=device).to(device)
 
     # initialize checkpoint callback depending on parse arguments
     checkpoint_callback = ModelCheckpoint(dirpath="checkpoints/", monitor="val_loss", mode="min")
 
-    trainer = Trainer(accelerator="gpu", max_epochs=300, profiler="simple",
+    trainer = Trainer(accelerator="gpu", max_epochs=1, profiler="simple",
                           callbacks=[checkpoint_callback, ModelSummary(4),
                                      EarlyStopping(monitor="val_loss",
                                                    mode="min",
                                                    patience=10)],
-                          strategy="auto", enable_checkpointing=True)
+                          strategy="auto", enable_checkpointing=True, limit_train_batches=10, limit_val_batches=10)
     # tuner = Tuner(trainer)
     # tuner.scale_batch_size(model, datamodule=datamodule, mode="power")
     

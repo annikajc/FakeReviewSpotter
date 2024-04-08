@@ -16,7 +16,6 @@ class DatasetFakeReviews(torch.utils.data.Dataset):
 
     def __getitem__(self, idx):
         text, label = self.data.iloc[idx]['text_'], self.data.iloc[idx]['label']
-        text += (" " * (2000 - len(text)))
         return text, label
 
     def __len__(self):
