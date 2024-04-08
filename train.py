@@ -33,12 +33,12 @@ def main():
     # initialize checkpoint callback depending on parse arguments
     checkpoint_callback = ModelCheckpoint(dirpath="checkpoints/", monitor="val_loss", mode="min")
 
-    trainer = Trainer(accelerator="gpu", max_epochs=1, profiler="simple",
+    trainer = Trainer(accelerator="gpu", max_epochs=300, profiler="simple",
                           callbacks=[checkpoint_callback, ModelSummary(4),
                                      EarlyStopping(monitor="val_loss",
                                                    mode="min",
                                                    patience=10)],
-                          strategy="auto", enable_checkpointing=True, limit_train_batches=50, limit_val_batches=50)
+                          strategy="auto", enable_checkpointing=True)
     # tuner = Tuner(trainer)
     # tuner.scale_batch_size(model, datamodule=datamodule, mode="power")
     
