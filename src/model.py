@@ -12,13 +12,15 @@ class FakeReviewsRoberta(torch.nn.Module):
         self.tokenizer = AutoTokenizer.from_pretrained("cardiffnlp/twitter-roberta-base-emotion")
         self.roberta = RobertaForSequenceClassification.from_pretrained("cardiffnlp/twitter-roberta-base-emotion",
                                                                         num_labels=num_classes,
+                                                                        max_position_embeddings=2048,
+                                                                        num_hidden_layers=6,
+                                                                        num_attention_heads=6,
                                                                         ignore_mismatched_sizes=True).to(device)
         self.stage = stage
         self.device = device
 
     def forward(self, batch):
         inputs = self.tokenizer(batch, add_special_tokens=False, return_tensors="pt").to(self.device)
-        print(inputs.shape)
         if self.stage == "train":
             logits = self.roberta(**inputs).logits
         else:
@@ -88,9 +90,9 @@ class FakeReviewsLightning(pl.LightningModule):
         # compute training metrics and log them
         epoch_train_cm = self.train_cm.compute()
         accuracy = (epoch_train_cm[0][0] + epoch_train_cm[1][1]) / (epoch_train_cm[0][0] + epoch_train_cm[0][1] + epoch_train_cm[1][0] + epoch_train_cm[1][1])
-        precision = (epoch_train_cm[1][1]) / (epoch_train_cm[1][1] + epoch_train_cm[0][1])
-        recall = (epoch_train_cm[1][1]) / (epoch_train_cm[1][1] + epoch_train_cm[1][0])
-        f1 = 2 * ((precision * recall) / (precision + recall))
+        precision = (epoch_train_cm[1][1]) / (epoch_train_cm[1][1] + epoch_train_cm[0][1]) if (epoch_train_cm[1][1] + epoch_train_cm[0][1]) > 0 else 0
+        recall = (epoch_train_cm[1][1]) / (epoch_train_cm[1][1] + epoch_train_cm[1][0]) if (epoch_train_cm[1][1] + epoch_train_cm[1][0]) > 0 else 0
+        f1 = 2 * ((precision * recall) / (precision + recall)) if (precision + recall) > 0 else 0
 
         self.log_dict({
                 'train_accuracy': accuracy,
@@ -122,9 +124,9 @@ class FakeReviewsLightning(pl.LightningModule):
         epoch_val_cm = self.val_cm.compute()
       
         accuracy = (epoch_val_cm[0][0] + epoch_val_cm[1][1]) / (epoch_val_cm[0][0] + epoch_val_cm[0][1] + epoch_val_cm[1][0] + epoch_val_cm[1][1])
-        precision = (epoch_val_cm[1][1]) / (epoch_val_cm[1][1] + epoch_val_cm[0][1])
-        recall = (epoch_val_cm[1][1]) / (epoch_val_cm[1][1] + epoch_val_cm[1][0])
-        f1 = 2 * ((precision * recall) / (precision + recall))
+        precision = (epoch_val_cm[1][1]) / (epoch_val_cm[1][1] + epoch_val_cm[0][1]) if (epoch_val_cm[1][1] + epoch_val_cm[0][1]) > 0 else 0
+        recall = (epoch_val_cm[1][1]) / (epoch_val_cm[1][1] + epoch_val_cm[1][0]) if (epoch_val_cm[1][1] + epoch_val_cm[1][0]) > 0 else 0
+        f1 = 2 * ((precision * recall) / (precision + recall)) if (precision + recall) > 0 else 0
 
         if self.global_step > 0:
             self.log_dict({
@@ -157,9 +159,9 @@ class FakeReviewsLightning(pl.LightningModule):
         epoch_test_cm = self.test_cm.compute()
       
         accuracy = (epoch_test_cm[0][0] + epoch_test_cm[1][1]) / (epoch_test_cm[0][0] + epoch_test_cm[0][1] + epoch_test_cm[1][0] + epoch_test_cm[1][1])
-        precision = (epoch_test_cm[1][1]) / (epoch_test_cm[1][1] + epoch_test_cm[0][1])
-        recall = (epoch_test_cm[1][1]) / (epoch_test_cm[1][1] + epoch_test_cm[1][0])
-        f1 = 2 * ((precision * recall) / (precision + recall))
+        precision = (epoch_test_cm[1][1]) / (epoch_test_cm[1][1] + epoch_test_cm[0][1]) if (epoch_test_cm[1][1] + epoch_test_cm[0][1]) > 0 else 0
+        recall = (epoch_test_cm[1][1]) / (epoch_test_cm[1][1] + epoch_test_cm[1][0]) if (epoch_test_cm[1][1] + epoch_test_cm[1][0]) > 0 else 0
+        f1 = 2 * ((precision * recall) / (precision + recall)) if (precision + recall) > 0 else 0
 
         self.log_dict({
             'test_accuracy': accuracy,

@@ -26,7 +26,7 @@ def main():
 
     torch.set_float32_matmul_precision('high')
 
-    datamodule = DataModuleFakeReviews(batch_size=1, num_workers=8)
+    datamodule = DataModuleFakeReviews(batch_size=1, num_workers=4)
 
     model = FakeReviewsLightning(clearml_logger=task.get_logger(), device=device).to(device)
 
@@ -39,8 +39,8 @@ def main():
                                                    mode="min",
                                                    patience=10)],
                           strategy="auto", enable_checkpointing=True, limit_train_batches=50, limit_val_batches=50)
-    tuner = Tuner(trainer)
-    tuner.scale_batch_size(model, datamodule=datamodule, mode="power")
+    # tuner = Tuner(trainer)
+    # tuner.scale_batch_size(model, datamodule=datamodule, mode="power")
     
     # else:
     #     print("No GPU")
