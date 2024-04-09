@@ -3,7 +3,6 @@ from src.model import FakeReviewsLightning
 import torch
 from pytorch_lightning.callbacks import ModelCheckpoint, ModelSummary, EarlyStopping
 from pytorch_lightning import Trainer
-from lightning.pytorch.tuner import Tuner
 from clearml import Task
 from transformers import AutoTokenizer
 
@@ -43,9 +42,6 @@ def main():
                                                    mode="min",
                                                    patience=10)],
                           strategy="auto", enable_checkpointing=True)
-    # tuner = Tuner(trainer)
-    # tuner.scale_batch_size(model, datamodule=datamodule, mode="power")
-    
     # else:
     #     print("No GPU")
 

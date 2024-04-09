@@ -79,7 +79,7 @@ class FakeReviewsLightning(pl.LightningModule):
         # metrics
         self.train_cm.update(outputs, targets)
 
-        self.log('train_loss', loss.detach(), on_step=False, on_epoch=True, prog_bar=True, logger=True)
+        self.log('train_loss', loss.detach(), on_step=True, on_epoch=True, prog_bar=True, logger=True)
 
         return {'loss': loss}
 
