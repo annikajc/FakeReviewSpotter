@@ -1,0 +1,7 @@
+pytorch-lightning
+clearml
+transformers
+scikit-learn
+pandas
+--find-links https://download.pytorch.org/whl/torch_stable.html
+torch>=1.10+cu121
