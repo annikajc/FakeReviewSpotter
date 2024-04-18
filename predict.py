@@ -42,6 +42,6 @@ def predict(reviews):
      
 
 if __name__ == '__main__':
-    input = ["I switched over from Nike. Best decision ever. These shoes last longer, provide a more solid foundation, and are more comfortable than any other brand I’ve tried.",
-             "These shoes seem like they could be good court shoes. Unfortunately I need size 14.5 in this shoe and that size is not offered. Had to buy size 15 forcing me to tie them tight enough to hurt the top of my feet because if they are looser my feet slide around and I have already lost 2 toe nails. They may work well for people that are able to get a good fit. They seem well made."]
+    input = ["I recently finished reading a novel from my favorite author, and I must say, it was absolutely captivating. The characters were so well-developed, and the plot twists kept me on the edge of my seat until the very end. I highly recommend it to anyone looking for a thrilling read!",
+             "I purchased a pair of shoes online, and when they arrived, I was pleasantly surprised by their quality. They fit perfectly and are incredibly comfortable to wear all day. Plus, the color goes well with almost any outfit. I couldn't be happier with my purchase!"]
     predict(input)

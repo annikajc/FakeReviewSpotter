@@ -9,7 +9,7 @@ from transformers import AutoTokenizer
 def main():
     # create ClearML task
     task = Task.init(project_name="Fake Review Detection",
-                     task_name="finetune RoBERTa - v1.0")
+                     task_name="transfer RoBERTa - reduced size")
 
     # initialize data module and model
     cuda_available = torch.cuda.is_available()
@@ -29,12 +29,12 @@ def main():
     # initialize tokenizer
     tokenizer = AutoTokenizer.from_pretrained("roberta-base")
 
-    datamodule = DataModuleFakeReviews(batch_size=2, tokenizer=tokenizer, max_length=256, num_workers=0)
+    datamodule = DataModuleFakeReviews(batch_size=2, tokenizer=tokenizer, max_length=256, num_workers=2)
 
     model = FakeReviewsLightning(clearml_logger=task.get_logger(), device=device).to(device)
 
     # initialize checkpoint callback depending on parse arguments
-    checkpoint_callback = ModelCheckpoint(dirpath="checkpoints/", monitor="val_loss", mode="min")
+    checkpoint_callback = ModelCheckpoint(dirpath="checkpoints_reduced/", monitor="val_loss", mode="min")
 
     trainer = Trainer(accelerator="gpu", max_epochs=300, profiler="simple",
                           callbacks=[checkpoint_callback, ModelSummary(4),

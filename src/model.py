@@ -5,12 +5,15 @@ from transformers import AutoTokenizer, RobertaForSequenceClassification
 from torchmetrics.classification import BinaryConfusionMatrix
 
 class FakeReviewsRoberta(torch.nn.Module):
-    def __init__(self, num_classes = 1, stage = "train", device=None):
+    def __init__(self, num_classes = 1, stage = "train", device=None, size=None):
         super().__init__()
-        
+        if size == None:
+            size = 12
         # load pre-trained Roberta model and set to train mode
         self.roberta = RobertaForSequenceClassification.from_pretrained("roberta-base",
                                                                         num_labels=num_classes,
+                                                                        num_hidden_layers=size,
+                                                                        num_attention_heads=size,
                                                                         ignore_mismatched_sizes=True).to(device)
         self.stage = stage
         self.device = device
@@ -47,7 +50,7 @@ class FakeReviewsLightning(pl.LightningModule):
     
     def configure_optimizers(self):
         # initialize Adam optimizer
-        optimizer = torch.optim.Adam(self.parameters(), lr=1e-5)
+        optimizer = torch.optim.Adam(self.parameters(), lr=1e-6)
         lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode="min")
         
         return {"optimizer": optimizer, "lr_scheduler": {"scheduler": lr_scheduler, "monitor": "val_loss"}}
