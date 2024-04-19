@@ -31,7 +31,7 @@ def main():
 
     datamodule = DataModuleFakeReviews(batch_size=2, tokenizer=tokenizer, max_length=256, num_workers=0)
 
-    model = FakeReviewsLightning.load_from_checkpoint("./checkpoints/amazon_weights.ckpt", clearml_logger=task.get_logger(), device=device).to(device)
+    model = FakeReviewsLightning.load_from_checkpoint("./checkpoints_reduced/reduced.ckpt", size=4, clearml_logger=task.get_logger(), device=device).to(device)
 
     trainer = Trainer(accelerator="gpu", max_epochs=300, profiler="simple",
                           callbacks=[ModelSummary(4)],
