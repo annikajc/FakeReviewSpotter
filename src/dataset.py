@@ -48,6 +48,11 @@ class DataModuleFakeReviews(pl.LightningDataModule):
         self.batch_size = batch_size
         self.num_workers = num_workers
 
+        if self.num_workers > 0:
+            self.persistent_workers = True
+        else:
+            self.persistent_workers = False
+
         # empty datasets
         self.train = None
         self.val = None
@@ -62,11 +67,11 @@ class DataModuleFakeReviews(pl.LightningDataModule):
         pass
 
     def setup(self, stage):
-        if self.dataset == "amazon":
+        if self.dataset == "amazon" or self.dataset == "amazon-finetune":
             # assign datasets for train, validation and test
             
             # load data in from csv
-            reviews_data = pd.read_csv(os.path.join(self.data, "fake_reviews_dataset.csv"))
+            reviews_data = pd.read_csv(os.path.join(self.data, "fake_reviews_dataset.csv")) if self.dataset == "amazon" else pd.read_csv(os.path.join(self.data, "fake_reviews_finetune.csv"))
             reviews_data['label'] = np.where(reviews_data['label'] == 'CG', 1, 0)
 
             # split individual classes so dataset remains balanced
@@ -107,15 +112,15 @@ class DataModuleFakeReviews(pl.LightningDataModule):
 
     def train_dataloader(self):
         return torch.utils.data.DataLoader(self.train, batch_size=self.batch_size, num_workers=self.num_workers, shuffle=True,
-                                           pin_memory=True, persistent_workers=False)
+                                           pin_memory=True, persistent_workers=self.persistent_workers)
     
     def val_dataloader(self):
         return torch.utils.data.DataLoader(self.val, batch_size=self.batch_size, num_workers=self.num_workers, shuffle=False,
-                                           pin_memory=True, persistent_workers=False)
+                                           pin_memory=True, persistent_workers=self.persistent_workers)
     
     def test_dataloader(self):
         return torch.utils.data.DataLoader(self.test, batch_size=self.batch_size, num_workers=self.num_workers, shuffle=False,
-                                           pin_memory=True, persistent_workers=False)
+                                           pin_memory=True, persistent_workers=self.persistent_workers)
 
 
 

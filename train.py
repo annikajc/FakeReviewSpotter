@@ -29,9 +29,9 @@ def main():
     # initialize tokenizer
     tokenizer = AutoTokenizer.from_pretrained("roberta-base")
 
-    datamodule = DataModuleFakeReviews(batch_size=2, tokenizer=tokenizer, max_length=256, num_workers=2)
+    datamodule = DataModuleFakeReviews(batch_size=4, tokenizer=tokenizer, dataset="amazon", max_length=256, num_workers=4)
 
-    model = FakeReviewsLightning(clearml_logger=task.get_logger(), device=device).to(device)
+    model = FakeReviewsLightning(clearml_logger=task.get_logger(), size=4, device=device).to(device)
 
     # initialize checkpoint callback depending on parse arguments
     checkpoint_callback = ModelCheckpoint(dirpath="checkpoints_reduced/", monitor="val_loss", mode="min")

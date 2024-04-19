@@ -14,7 +14,7 @@ def predict(reviews):
     device = torch.device("cuda" if cuda_available else "cpu")
 
     # load model weights and pretrained tokenizer
-    model = FakeReviewsLightning.load_from_checkpoint('./checkpoints/amazon_weights.ckpt', device=device).to(device)
+    model = FakeReviewsLightning.load_from_checkpoint('./checkpoints_reduced/reduced.ckpt', size=4, device=device).to(device)
     tokenizer = AutoTokenizer.from_pretrained("roberta-base")
     for review in reviews:
         title = str(review)
@@ -32,7 +32,6 @@ def predict(reviews):
         ids = inputs['input_ids'].to(dtype=torch.long).flatten().to(device)
         mask = inputs['attention_mask'].to(dtype=torch.long).flatten().to(device)
         prediction = model(ids.unsqueeze(dim=0), mask.unsqueeze(dim=0), None)
-        print(prediction)
         fake = 0 if torch.nn.functional.sigmoid(prediction).item() < 0.5 else 1
         if fake == 0:
             print('Review is real.')

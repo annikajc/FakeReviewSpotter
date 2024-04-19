@@ -28,14 +28,14 @@ class FakeReviewsRoberta(torch.nn.Module):
     
 
 class FakeReviewsLightning(pl.LightningModule):
-    def __init__(self, num_classes=1, clearml_logger=None, device = None):
+    def __init__(self, num_classes=1, clearml_logger=None, size=12, device = None):
         super().__init__()
 
         # initialize logger
         self.clearml_logger = clearml_logger
 
         # initialize model
-        self.model = FakeReviewsRoberta(num_classes=num_classes, device=device)
+        self.model = FakeReviewsRoberta(num_classes=num_classes, size=size, device=device)
 
         # initialize loss function
         self.loss_fn = torch.nn.BCEWithLogitsLoss()
