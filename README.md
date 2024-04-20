@@ -1,4 +1,5 @@
-An AI-powered Chrome extension that detects and filters out fake product reviews.
+# Fake Review Spotter
+A web application that identifies fake reviews and returns true Amazon ratings.
 
 ## Running the Model
 1. If not installed, install NVIDIA CUDA toolkit.
