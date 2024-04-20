@@ -1,128 +1,65 @@
 import time
-import requests
-import re
-import gradio as gr
 from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.service import Service
 from bs4 import BeautifulSoup
-
-# def extract_text(reviews, ratings, review_elements, review_ratings):
-#     # Iterate over each review element and extract the review text
-#     for review in review_elements:
-#         # Find the span tag containing the review text
-#         review_text_tag = review.find('span')
-#         if review_text_tag:
-#             # Extract the review text
-#             review_text = review_text_tag.get_text(strip=True)
-#             reviews.append(review_text)
-
-#     for rating in review_ratings:
-#         rating_text_tag = rating.find('span')
-#         if rating_text_tag:
-#             # Extract the review text
-#             rating_text = rating_text_tag.get_text(strip=True)
-#             #rating_text = rating.get_text(strip=True)
-#             rating_num = re.search(r'\d+\.\d+', rating_text).group()
-#             ratings.append(rating_num)
+import re
 
 def format_reviews(amazon_link):
-    # driver = webdriver.Chrome("./chromedriver.exe")
-    # driver.get(amazon_link)
+    # Set up Selenium WebDriver
+    options = webdriver.ChromeOptions()
+    options.add_argument('--headless')  # To run Chrome in headless mode
+    driver = webdriver.Chrome(options=options)
 
-    amazon_link.replace("dp", "product-reviews")
-
-    # Send a GET request to the Amazon link and fetch the HTML content
-    # response = requests.get(amazon_link)
-    # if response.status_code != 200:
-    #     print("Failed to fetch page")
-    #     return []
-
-    # # Parse the HTML content using Beautiful Soup
-    # soup = BeautifulSoup(response.text, 'html.parser')
-
-    # # Find all review elements
-    # review_elements = soup.find_all(class_="a-expander-content reviewText review-text-content a-expander-partial-collapse-content")
-    # review_ratings = soup.find_all(class_="a-size-base a-link-normal review-title a-color-base review-title-content a-text-bold")
+    amazon_link = amazon_link.replace('dp', 'product-reviews')
 
     reviews = []
-    ratings = []
 
-    # # Iterate over each review element and extract the review text
-    # for review in review_elements:
-    #     # Find the span tag containing the review text
-    #     review_text_tag = review.find('span')
-    #     if review_text_tag:
-    #         # Extract the review text
-    #         review_text = review_text_tag.get_text(strip=True)
-    #         reviews.append(review_text)
+    for i in range(2, 12):
+        new_amazon_link = amazon_link + f"/ref=cm_cr_arp_d_paging_btm_next_{i}?&pageNumber={i}"
+        driver.get(new_amazon_link)
 
-    # for rating in review_ratings:
-    #     rating_text_tag = rating.find('span')
-    #     if rating_text_tag:
-    #         # Extract the review text
-    #         rating_text = rating_text_tag.get_text(strip=True)
-    #         #rating_text = rating.get_text(strip=True)
-    #         rating_num = re.search(r'\d+\.\d+', rating_text).group()
-    #         ratings.append(rating_num)
-
-    for i in range(500, 501):
-        new_amazon_link = amazon_link + f"/ref=cm_cr_arp_d_paging_btm_next_2?&pageNumber={i}"
-        print(new_amazon_link + "\n")
-        response = requests.get(new_amazon_link)
-        time.sleep(2)
+        # Scroll to the bottom of the page to load more reviews
+        last_height = driver.execute_script("return document.body.scrollHeight")
+        while True:
+            driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+            time.sleep(1)
+            new_height = driver.execute_script("return document.body.scrollHeight")
+            if new_height == last_height:
+                break
+            last_height = new_height
 
         # Parse the HTML content using Beautiful Soup
-        soup = BeautifulSoup(response.text, 'html.parser')
-
-        target_div = soup.find("div", {"id": "filter-info-section"})
-
-        ahhhhh = []
-        # Extract text if the div is found
-        if target_div:
-            print(target_div.text)
-        else:
-            print("Target div not found")
+        soup = BeautifulSoup(driver.page_source, 'html.parser')
 
         # Find all review elements
-        review_elements = soup.find_all(class_="a-expander-content reviewText review-text-content a-expander-partial-collapse-content")
-        review_ratings = soup.find_all(class_="a-size-base a-link-normal review-title a-color-base review-title-content a-text-bold")
+        review_elements = soup.find_all(class_='a-section celwidget')
+
+        if (len(review_elements) == 0):
+            break
 
         # Iterate over each review element and extract the review text
         for review in review_elements:
-            # Find the span tag containing the review text
-            review_text_tag = review.find('span')
+            
+            review_text_tag = review.find('span', {'data-hook': 'review-body'})
             if review_text_tag:
-                # Extract the review text
                 review_text = review_text_tag.get_text(strip=True)
-                reviews.append(review_text)
-
-        for rating in review_ratings:
-            rating_text_tag = rating.find('span')
+            
+            rating_text_tag = review.find(class_='a-icon-alt')
             if rating_text_tag:
-                # Extract the review text
                 rating_text = rating_text_tag.get_text(strip=True)
-                #rating_text = rating.get_text(strip=True)
-                rating_num = re.search(r'\d+\.\d+', rating_text).group()
-                ratings.append(rating_num)
+                if re.search(r'\d+\.\d+', rating_text) is not None:
+                    rating_num = re.search(r'\d+\.\d+', rating_text).group()
+            
+            tuple = (review_text, float(rating_num))
 
+            reviews.append(tuple)
 
-    # print(reviews)
-    # print(ratings)
+    driver.quit()
 
     return reviews
 
 def main():
-    # #Define input field for Amazon link
-    # input_link = gr.Textbox(lines=1, label="Input Amazon link")
+    format_reviews('https://www.amazon.com/Quencher-FlowState-Stainless-Insulated-Smoothie/dp/B0CP9Z56SW/?_encoding=UTF8&pd_rd_w=Y1X8m&content-id=amzn1.sym.64be5821-f651-4b0b-8dd3-4f9b884f10e5&pf_rd_p=64be5821-f651-4b0b-8dd3-4f9b884f10e5&pf_rd_r=XH64EVS47ERBNGJKVF48&pd_rd_wg=FNn9i&pd_rd_r=0ba5f17d-ccdc-412c-844d-6bc870bf8cfa&ref_=pd_gw_crs_zg_bs_284507&th=1')
 
-    # #Define output field for reviews
-    # output_reviews = gr.Textbox(label="Reviews")
-
-    # #Create Gradio interface
-    # gr.Interface(fn=format_reviews, inputs=input_link, outputs=output_reviews, title="Amazon Review Extractor").launch()
-
-    format_reviews('https://www.amazon.com/Wireless-Uiosmuph-Rechargeable-Portable-Computer/dp/B0836GXKKB/ref=pd_gw_rpt_sd_biaws_g_3?_encoding=UTF8&dd=TBNP4Ce6LR_qcvI7mDp3CdNGzeC2M1AGI-JCm90QnS4%2C&ddc_refnmnt=free&pd_rd_i=B0836GXKKB&pd_rd_w=O2ghB&content-id=amzn1.sym.ae3c55fc-7f19-4a1a-be25-ba2c1b81e6de&pf_rd_p=ae3c55fc-7f19-4a1a-be25-ba2c1b81e6de&pf_rd_r=W5F3QBQQ68NN71ZJ3Z78&pd_rd_wg=DeSDz&pd_rd_r=a5fc6ea6-ba84-424f-9b9b-a88bb4e68425&th=1')
 
 if __name__ == "__main__":
     main()
