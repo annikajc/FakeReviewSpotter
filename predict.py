@@ -4,7 +4,7 @@ from transformers import AutoTokenizer
 import warnings
 warnings.filterwarnings("ignore")
 
-def predict(reviews):
+def is_fake(reviews):
     """
     Helper function for reading in the reviews passed in as input
     and outputting the prediction.
@@ -33,14 +33,9 @@ def predict(reviews):
         mask = inputs['attention_mask'].to(dtype=torch.long).flatten().to(device)
         prediction = model(ids.unsqueeze(dim=0), mask.unsqueeze(dim=0), None)
         fake = 0 if torch.nn.functional.sigmoid(prediction).item() < 0.5 else 1
+        # Review is real
         if fake == 0:
-            print('Review is real.')
+            return False
+        # Review is fake
         else:
-            print('Review is fake.')
-
-     
-
-if __name__ == '__main__':
-    input = ["I recently finished reading a novel from my favorite author, and I must say, it was absolutely captivating. The characters were so well-developed, and the plot twists kept me on the edge of my seat until the very end. I highly recommend it to anyone looking for a thrilling read!",
-             "I purchased a pair of shoes online, and when they arrived, I was pleasantly surprised by their quality. They fit perfectly and are incredibly comfortable to wear all day. Plus, the color goes well with almost any outfit. I couldn't be happier with my purchase!"]
-    predict(input)
+            return True
