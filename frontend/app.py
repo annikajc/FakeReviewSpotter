@@ -4,6 +4,7 @@ import style
 
 sys.path.append("..")
 from predict import is_fake
+from webscrape import format_reviews
 
 def predict_review(review):
     """
