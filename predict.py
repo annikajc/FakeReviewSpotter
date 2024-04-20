@@ -39,10 +39,3 @@ def is_fake(reviews):
         # Review is fake
         else:
             return True
-
-     
-
-if __name__ == '__main__':
-    input = ["I recently finished reading a novel from my favorite author, and I must say, it was absolutely captivating. The characters were so well-developed, and the plot twists kept me on the edge of my seat until the very end. I highly recommend it to anyone looking for a thrilling read!",
-             "I purchased a pair of shoes online, and when they arrived, I was pleasantly surprised by their quality. They fit perfectly and are incredibly comfortable to wear all day. Plus, the color goes well with almost any outfit. I couldn't be happier with my purchase!"]
-    is_fake(input)
