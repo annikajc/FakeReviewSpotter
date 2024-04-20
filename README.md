@@ -7,5 +7,10 @@ A web application that identifies fake reviews and returns true Amazon ratings.
    in the requirements file to match the installed version from step 1.
 3. To train, modify the train script to contain the desired hyperparameters and run `python train.py`.
 
+## Running the Frontend
+1. Use the command `cd frontend` and run the command `python app.py` to run the web app on the localhost.
+   
 ## Team
 Developed by Annika Joy Cruz, Matthew Mapa, Derek Mo
+
+Our model weights can be obtained from the following link: https://drive.google.com/file/d/1AQjlKhHvqwM2qQDptOXP_c2KJpsdz328/view?usp=drive_link. Include the folder in the repository if you want to use our pretrained weights.
