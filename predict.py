@@ -9,15 +9,18 @@ def is_fake(reviews):
     Helper function for reading in the reviews passed in as input
     and outputting the prediction.
     """
+    numFake = 0
+    total = 0
+
     # get device
     cuda_available = torch.cuda.is_available()
     device = torch.device("cuda" if cuda_available else "cpu")
 
     # load model weights and pretrained tokenizer
-    model = FakeReviewsLightning.load_from_checkpoint('./checkpoints_reduced/reduced.ckpt', size=4, device=device).to(device)
+    model = FakeReviewsLightning.load_from_checkpoint('../checkpoints_reduced/reduced.ckpt', size=4, device=device).to(device)
     tokenizer = AutoTokenizer.from_pretrained("roberta-base")
     for review in reviews:
-        title = str(review)
+        title = str(review[0])
         title = " ".join(title.split())
         inputs = tokenizer.encode_plus(
             title,
@@ -34,8 +37,15 @@ def is_fake(reviews):
         prediction = model(ids.unsqueeze(dim=0), mask.unsqueeze(dim=0), None)
         fake = 0 if torch.nn.functional.sigmoid(prediction).item() < 0.5 else 1
         # Review is real
-        if fake == 0:
+        if fake == 0 and len(reviews) == 1:
             return False
         # Review is fake
-        else:
+        elif len(reviews) == 1:
             return True
+
+        if fake == 1:
+            numFake += 1
+        else:
+            total += review[1]
+            
+    return numFake, total

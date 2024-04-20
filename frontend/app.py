@@ -21,15 +21,9 @@ def predict_link(link):
     Output for Amazon link analysis
     """
     reviews = format_reviews(link)
-    numFake = 0
-    numReviews = len(reviews)
     total = 0
-    for review in reviews:
-        if is_fake(review[0]):
-            numFake += 1
-            reviews.remove(review)
-        else:
-            total += review[1]
+    numReviews = len(reviews)
+    numFake, total = is_fake(reviews)
 
     # TODO: CHANGE DUMMY VALUES TO VARIABLES + ADD FUNCTIONALITY
     result = "<h2>Fake Reviews:</h2>"
