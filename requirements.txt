@@ -1,9 +1,8 @@
 pytorch-lightning
 clearml
 transformers
-scikit-learn
 pandas
 gradio
 selenium
 --find-links https://download.pytorch.org/whl/torch_stable.html
-torch>=1.10+cu121
+torch==2.1.0+cu118

@@ -2,3 +2,5 @@ lightning_logs/
 src/__pycache__/
 checkpoints/
 checkpoints_reduced/
+__pycache__/
+frontend/__pycache__/
