@@ -19,12 +19,23 @@ def predict_link(link):
     """
     Output for Amazon link analysis
     """
+    reviews = format_reviews(link)
+    numFake = 0
+    numReviews = len(reviews)
+    total = 0
+    for review in reviews:
+        if is_fake(review[0]):
+            numFake += 1
+            reviews.remove(review)
+        else:
+            total += review[1]
+
     # TODO: CHANGE DUMMY VALUES TO VARIABLES + ADD FUNCTIONALITY
     result = "<h2>Fake Reviews:</h2>"
-    result += style.percent_color(30)
+    result += style.percent_color(round((numFake/numReviews) * 100, 2))
     
     result += "<h2>Adjusted Rating:</h2>"
-    result += style.rating_color(2.0)
+    result += style.rating_color(round(total/len(reviews), 2))
 
     return result
 
