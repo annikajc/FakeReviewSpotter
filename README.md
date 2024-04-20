@@ -10,4 +10,4 @@ A web application that identifies fake reviews and returns true Amazon ratings.
 ## Team
 Developed by Annika Joy Cruz, Matthew Mapa, Derek Mo
 
-Our model weights can be obtained from the following link: https://drive.google.com/file/d/1AQjlKhHvqwM2qQDptOXP_c2KJpsdz328/view?usp=drive_link
+Our model weights can be obtained from the following link: https://drive.google.com/file/d/1AQjlKhHvqwM2qQDptOXP_c2KJpsdz328/view?usp=drive_link. Include the folder in the repository if you want to use our pretrained weights.
