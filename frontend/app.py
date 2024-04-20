@@ -10,7 +10,7 @@ def predict_review(review):
     """
     Print output for review analysis
     """
-    if is_fake(review):
+    if is_fake([(review, 5.0)]):
         return "<h2 class='result-fake'>Review is fake.</h2>"
     else:
         return "<h2 class='result-real'>Review is real.</h2>"
