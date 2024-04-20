@@ -56,10 +56,3 @@ def format_reviews(amazon_link):
     driver.quit()
 
     return reviews
-
-def main():
-    format_reviews('https://www.amazon.com/Quencher-FlowState-Stainless-Insulated-Smoothie/dp/B0CP9Z56SW/?_encoding=UTF8&pd_rd_w=Y1X8m&content-id=amzn1.sym.64be5821-f651-4b0b-8dd3-4f9b884f10e5&pf_rd_p=64be5821-f651-4b0b-8dd3-4f9b884f10e5&pf_rd_r=XH64EVS47ERBNGJKVF48&pd_rd_wg=FNn9i&pd_rd_r=0ba5f17d-ccdc-412c-844d-6bc870bf8cfa&ref_=pd_gw_crs_zg_bs_284507&th=1')
-
-
-if __name__ == "__main__":
-    main()
