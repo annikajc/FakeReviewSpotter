@@ -1,6 +1,9 @@
 import gradio as gr
-from predict import is_fake
+import sys
 import style
+
+sys.path.append("..")
+from predict import is_fake
 
 def predict_review(review):
     """
