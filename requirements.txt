@@ -3,6 +3,7 @@ clearml
 transformers
 pandas
 gradio
+beautifulsoup4
 selenium
 --find-links https://download.pytorch.org/whl/torch_stable.html
 torch==2.1.0+cu118
