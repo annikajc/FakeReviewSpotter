@@ -1,38 +1,45 @@
 import gradio as gr
 from predict import is_fake
+import style
 
 def predict_review(review):
     """
     Print output for review analysis
     """
     if is_fake(review):
-        return "Review is fake."
+        return "<h2 class='result-fake'>Review is fake.</h2>"
     else:
-        return "Review is real."
+        return "<h2 class='result-real'>Review is real.</h2>"
 
 
 def predict_link(link):
     """
     Output for Amazon link analysis
     """
-    # FILLER RETURN STATEMENT
-    return "INSERT RESULT HERE"
+    # TODO: CHANGE DUMMY VALUES TO VARIABLES + ADD FUNCTIONALITY
+    result = "<h2>Fake Reviews:</h2>"
+    result += style.percent_color(30)
+    
+    result += "<h2>Adjusted Rating:</h2>"
+    result += style.rating_color(2.0)
+
+    return result
 
 
-with gr.Blocks() as demo:
+with gr.Blocks(css=style.css) as demo:
     gr.Markdown("# Analyze fake reviews here!")
-    gr.Markdown("Assess if a review is fake, or assess the percentage of fake reviews for an Amazon product.")
+    gr.Markdown("Determine if a review is fake, or assess the fake review rate of any Amazon product.")
 
     with gr.Tab("Analyze Review"):
         review = gr.Textbox(label="Insert review")
-        review_result = gr.Text(label="Result")
         review_btn = gr.Button("Analyze")
+        review_result = gr.HTML(label="Result")
         review_btn.click(fn=predict_review, inputs=review, outputs=review_result, api_name="predict_review")
 
     with gr.Tab("Analyze Link"):
         link = gr.Textbox(label="Insert Amazon link")
-        link_result = gr.Text(label="Result")
         link_btn = gr.Button("Analyze")
+        link_result = gr.HTML(label="Result")
         link_btn.click(fn=predict_link, inputs=link, outputs=link_result, api_name="predict_link")
     
     
